@@ -1,0 +1,306 @@
+MATLAB Clustering Classes
+
+June 14, 2016
+
+Michael J. Wester (wester@math.unm.edu)
+SpatioTemporal Modeling Center
+University of New Mexico Health Sciences Center
+
+-------------------------------------------------------------------------------
+
+MATLAB Clustering Classes
+
+o Best with MATLAB version 2014 or later
+o Toolboxes used (matlab.codetools.requiredFilesAndProducts):
+  - Control System
+  - Curve Fitting
+  - Image Processing
+  - Statistics and Machine Learning
+o Common interface to sets of functions
+o Scriptable
+o Availability
+  http://stmc.health.unm.edu/tools-and-data/
+
+-------------------------------------------------------------------------------
+
+MATLAB Clustering Classes
+
+o SimulateDomains.m (Statistics)
+
+  simulations of spatial domains (clusters) of fluorophore localizations
+  that exhibit distributions of observations representing blinks
+
+o Clustering.m (Curve Fitting, Image Processing, Statistics)
+
+  spatial clustering algorithms:
+     hierarchal, DBSCAN [4 versions], Getis based, Voronoi based
+  spatial clustering statistics:
+     pairwise distance, Hopkin's, Ripley's, bivariate Ripley's, dendrogram
+
+o SRcluster.m (Control System, Curve Fitting, Image Process, Statistics)
+
+  a top-down clustering algorithm to collapse clusters of observations of
+  blinking fluorophores into a single estimate of the true location of the
+  fluorophore using a log-likelihood hypothesis test
+
+o PairCorr.m (Image Processing, Statistics)
+
+  pair auto- and cross-correlation curves and statistics
+
+Many of these will work in 2D and 3D.
+Includes a collection of various sample drivers.
+
+-------------------------------------------------------------------------------
+
+Domain Simulation
+
+o clusters of localizations
+o observations corresponding to each localization
+o clusters can be elongated (sigma_x != sigma_y) and rotated
+o a mix of elongated and non-elongated clusters possible
+o polygonal domain boundary can be provided
+o 3D
+
+-------------------------------------------------------------------------------
+
+Clustering Algorithms
+
+o hierarchal
+o DBSCAN
+  - Daszykowski (with and w/o E)
+  - Kovesi
+  - Pehlke
+  - Tran
+o Getis based
+o Voronoi based
+
+-------------------------------------------------------------------------------
+
+Hierarchical Clustering
+
+MATLAB linkage function
+
+-------------------------------------------------------------------------------
+
+DBSCAN (Density-Based Spatial Clustering of Applications with Noise)
+
+A cluster satisfies two properties (https://en.wikipedia.org/wiki/DBSCAN):
+- all points within a cluster are mutually density-connected
+  (density-reachable by a distance < epsilon from a common intermediate
+   point and the cluster has a sufficient number of points),
+– if a point is density-reachable from any point of the cluster, it is part of
+  the cluster as well.
+Points are thus designated as core points, density-reachable points and
+outliers.
+
+Martin Ester, Hans-Peter Kriegel and J\"org Sander and Xiaowei Xu, ``A
+Density-Based Algorithm for Discovering Clusters in Large Spatial Databases
+with Noise'', in _Proceedings of 2nd International Conference on Knowledge
+Discovery and Data Mining (KDD-96)_ edited by Evangelos Simoudis, Jiawei Han
+and Usama M. Fayyad, AAAI Press, 1996, 226--231 (ISBN:1-57735-004-9,
+DOI:10.1.1.71.1980).
+
+4 implementations (adjudged by speed and stability under coordinate
+reordering):
+
+o M. Daszykowski, B. Walczak and D. L. Massart, ``Looking for natural patterns
+  in data. Part 1: Density-based approach'', _Chemometrics and Intelligent
+  Laboratory Systems_, Volume 56, Issue 2, May 2001, 83--92.
+
+o Peter Kovesi, Centre for Exploration Targeting, The University of Western
+  Australia, 2013.
+
+o Carolyn Pehlke, SpatioTemporal Modeling Center, University of New Mexico,
+  2013.
+
+o Thanh N. Tran, Klaudia Drab and Michal Daszykowski, ``Revised DBSCAN
+  algorithm to cluster data with dense adjacent clusters'', _Chemometrics and
+  Intelligent Laboratory Systems_, Volume 120, Issue 92, January 2013, 92--96
+  (DOI: 10.1016/j.chemolab.2012.11.006).
+
+-------------------------------------------------------------------------------
+
+Getis based Clustering (developed by Carolyn Pehlke)
+
+Getis statistic:
+
+            sum(w_ij(d) x_j, j != i) 
+   G_i(d) = ------------------------
+                sum(x_j, j != i)
+
+where
+
+   x_j     is the data of which there are n items
+   w_ij(d) is a symmetric weight matrix that is a function of the distance d
+           that i is separated from j
+
+J. K. Ord and Arthur Getis, ``Local Spatial Autocorrelation Statistics:
+Distributional Issues and an Application'', _Geographical Analysis_, Volume 27,
+Number 4, October 1995, 286--306.
+
+Michelle S. Itano, Matthew S. Graus, Carolyn Pehlke, Michael J. Wester,
+Ping Liu, Keith A. Lidke, Nancy L. Thompson, Ken Jacobson and Aaron K. Neumann,
+``Super-resolution imaging of C-type lectin spatial rearrangement within the
+dendritic cell plasma membrane at fungal microbe contact sites'', _Frontiers in
+Physics, section Membrane Physiology and Membrane Biophysics_, Volume 2,
+Number 46, August 2014, 1--17 (DOI: 10.3389/fphy.2014.00046).
+
+-------------------------------------------------------------------------------
+
+Voronoi based Clustering
+
+   A Voronoi diagram or tesselation is a partitioning of the plane into
+   regions, each containing one seed point, such that each boundary edge
+   segment is equidistant from the nearest seed points.
+
+   Choose rank n polygons with density > alpha*density_average.
+   (alpha = 2 is a typical choice.)
+
+Florian Levet, Eric Hosy, Adel Kechkar, Corey Butler, Anne Beghin, Daniel
+Choquet and Jean-Baptiste Sibarita, ``SR-Tesseler: a method to segment and
+quantify localization-based super-resolution microscopy data'', _Nature
+Methods_, Volume 12, Number 11, 2015, 1065--1071 (DOI:10.1038/NMETH.3579).
+
+-------------------------------------------------------------------------------
+
+Example Clustering Driver
+
+    XY = load('...');   % nm
+    E = 30;             % nm
+    minPts = 3;
+
+    c = Clustering();
+    algorithm = 'Hierarchical';
+    [nC, C, centers, ptsI] = c.cluster(algorithm, XY, E, minPts);
+    fprintf('number of clusters = %d\n', nC);
+    results = c.clusterStats(XY, C, centers)
+    clusterFig = c.plotClusters(XY, C, centers, ptsI, algorithm);
+    showm(clusterFig);
+
+------------------------------------------------------------------------------
+
+Hopkins' and Ripley's Statistics
+
+   The Hopkins' statistic (H) tests for complete spatial randomness of a probe
+   pattern by comparing nearest neighbor distances from random points and
+   randomly chosen probes.  For good results, H should be computed multiple
+   times for a single image.
+      H = 1/2 for completely random probes
+      H = 1   for completely clustered probes
+
+   Ripley's K analysis tests for clustering and co-clustering by comparing the
+   average number of probes in a disk of radius r about each of the probes with
+   the average density of probes over the region considered.  Ripley's L
+   function then normalizes the K results so that for
+      small r,          L < 0
+      r < cluster size, L > 0
+      r > cluster size, L = 0
+
+   In a bivariate analysis (where two different sets of probes in the same
+   region are considered), the L function acts as above except that now the
+   cluster size refers to clusters of co-mingled points from the two sets.
+
+Jun Zhang, Karin Leiderman, Janet R. Pfeiffer, Bridget S. Wilson, Janet M.
+Oliver and Stanly L. Steinberg, ``Characterizing the Topography of Membrane
+Receptors and Signaling Molecules from Spatial Patterns Obtained using
+Nanometer-scale Electron-dense Probes and Electron Microscopy'', _Micron_,
+Volume 37, Issue 1, January 2006, 14--34 (DOI:10.1016/j.micron.2005.03.014).
+
+Dendrograms:
+
+Flor A. Espinoza, Janet M. Oliver, Bridget S. Wilson and Stanly L. Steinberg,
+``Using Hierarchical Clustering and Dendrograms to Quantify the Clustering of
+Membrane Proteins'', _Bulletin of Mathematical Biology_, Volume 74, Issue 1,
+January 2012, 190--211 (PMID: 21751075, PMCID: PMC3429354).
+
+-------------------------------------------------------------------------------
+
+H-SET (Hierarchical Single Emitter hypothesis Test)
+
+  A top-down clustering algorithm to collapse clusters of observations of
+  blinking fluorophores into a single estimate of the true location of the
+  fluorophore using a log-likelihood hypothesis test.
+
+Jia Lin, Michael J. Wester, Matthew S. Graus, Keith A. Lidke and Aaron K.
+Neumann, ``Nanoscopic cell wall architecture of an immunogenic ligand in
+_Candida albicans_ during antifungal drug treatment'', _Molecular Biology of
+the Cell_, Volume 27, Number 6, March 15, 2016, 1002--1014
+(DOI: 10.1091/mbc.E15-06-0355, PMID: 26792838).
+
+-------------------------------------------------------------------------------
+
+H-SET
+
+The maximum likelihood estimate of the collapsed position is the
+variance-weighted mean value of the observed positions:
+        N
+       ====    x
+       \        i
+        >    -------
+       /           2
+       ====  sigma'
+   _   i = 1       i
+   x = -------------
+        N
+       ====
+       \       1
+        >    -------
+       /           2
+       ====  sigma'
+       i = 1       i
+where
+         2        2        2
+   sigma'  = sigma  + sigma
+         i        i        reg
+Here, x_i and sigma_i are the observed positions of the fluorophores and the
+uncertainties in the observed positions, respectively, while sigma_reg is the
+registration error and sigma'_i is the modified uncertainty including the
+effects of drift correction. 
+
+-------------------------------------------------------------------------------
+
+SR Collapse Studies of various parameters for two clusters of observations at
+varying separations
+
+-------------------------------------------------------------------------------
+
+Pair Auto- and Cross-Correlation
+
+   g(r) and c(r) report the increased probability of finding a second localized
+   signal a distance r away from a given localized signal in super-resolution
+   images, computed via fast Fourier transforms of the images.
+
+      g(r) = < rho(R) rho(R - r) > / rho^2
+
+   where the average is over all positions R in the image.  In this definition,
+   g(r) = 1 represents a random distribution.  Often, it can be assumed that
+   g(r) is symmetric to rotations, and it is averaged over angles.
+
+   Fitting the g/c(r) curve produces estimates of cluster and localization
+   sizes and densities.
+
+   Able to combine results for multiple rectangular ROIs of various sizes.
+
+Sarah L. Veatch, Benjamin B. Machta, Sarah A. Shelby, Ethan N. Chiang, David A.
+Holowka and Barbara A. Baird, ``Correlation Functions Quantify Super-Resolution
+Images and Estimate Apparent Clustering Due to Over-Counting'', _PLoS ONE_,
+Volume 7, Issue 2, February 2012, 1--13.
+
+Prabuddha Sengupta, Tijana Jovanovic-Talisman, Dunja Skoko, Malte Renz,
+Sarah L. Veatch and Jennifer Lippincott-Schwartz, ``Probing protein
+heterogeneity in the plasma membrane using PALM and pair correlation
+analysis'', _Nature Methods_, Volume 8, Number 11, November 2011, 969--975.
+
+-------------------------------------------------------------------------------
+
+Acknowledgments
+
+   Keith Lidke
+   Stanly Steinberg
+   Flor Espinoza
+   Carolyn Pehlke
+   Matt Graus
+   Jia Lin
+   Aaron Neumann
+   Samantha Schwartz
+   Zsolt Sebestyen

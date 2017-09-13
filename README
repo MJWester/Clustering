@@ -70,6 +70,9 @@ SRcluster.m          collapse multiple observations into single localizations
 data/
    various sample data used by some of the drivers
 
+doc/
+   presentation and notes
+
 drivers/
    clust.m          driver to run several clustering algorithms
    clust3.m         driver to run several clustering algorithms on 3D data

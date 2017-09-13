@@ -77,6 +77,8 @@ drivers/
    compilerROI.m    [Matt] process SRclustered data as found in ROIs
    Fig_V5_Revs_20150903.m
                     driver to produce figures for Lin et al.
+   getROI_unitTest.m
+                    test getROI using different data formats
    grabROI.m        [Matt] script to call getROI
    inpoly.m         convex and concave hull functions and insideness tests
    main.m           example driver for SRcluster

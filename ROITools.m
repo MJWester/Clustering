@@ -1,6 +1,6 @@
 classdef ROITools < handle
 
-% ROITools class written by Michael Wester (4/11/2017) <wester@math.unm.edu>
+% ROITools class written by Michael Wester (9/13/2017) <wester@math.unm.edu>
 % The New Mexico Center for the Spatiotemporal Modeling of Cell Signaling
 % University of New Mexico Health Sciences Center
 % Albuquerque, New Mexico, USA   87131
@@ -26,11 +26,12 @@ methods
 
 function [n_ROIs, RoI, Sigma_Reg] = getROI(obj, src, txt)
 % Let the user select ROIs from
-%    an SR_demo data structure,
+%    an SMA_SR or SR_demo data structure,
 %    point (x, y) coordinates [provided as n x 2 matrices, or if x_STD and
 %       y_STD are appended, then n x 4 matrices],
-%    super-resolution image files containing an SRD or SRtest data structure,
-%    or directly from an SRD.Results data structure.
+%    super-resolution image files containing an SMA_SR or SR_demo data
+%       structure,
+%    or directly from a data structure with fields X and Y.
 %
 % Inputs:
 %    src              cell array of (x, y) coordinate sources, although it is
@@ -278,16 +279,27 @@ methods(Static)
 
 function [XY, XY_STD, Sigma_Reg] = import_XY(src, pixel2nm)
 % Import n x 2 (x, y) coordinates and standard deviations from
-%    an SR_demo data structure,
+%    an SMA_SR or SR_demo data structure,
 %    point (x, y) coordinates [provided as n x 2 matrices, or if x_STD and
 %       y_STD are appended, then n x 4 matrices],
-%    super-resolution image files containing an SRD or SRtest data structure,
-%    or directly from an SRD.Results data structure.
+%    super-resolution image files containing an SMA_SR or SR_demo data
+%       structure,
+%    or directly from a data structure with fields X and Y.
 
    XY_STD = [];
    Sigma_Reg = [10, 10];   % default registration error
 
-   if strcmp(class(src), 'SR_demo')
+   if strcmp(class(src), 'SMA_SR')
+      % src is an SR_demo data structure
+      XY = [ double(src.SMR.X) .* pixel2nm, ...
+             double(src.SMR.Y) .* pixel2nm ];
+      XY_STD = [ double(src.SMR.X_SE) .* pixel2nm, ...
+                 double(src.SMR.Y_SE) .* pixel2nm ];
+      if isprop(src, 'DriftCorrect_XYShift') && ...
+         ~isempty(src.DriftCorrect_XYShift)
+         Sigma_Reg = std(src.DriftCorrect_XYShift) .* pixel2nm;
+      end
+   elseif strcmp(class(src), 'SR_demo')
       % src is an SR_demo data structure
       XY = [ double(src.Results.X) .* pixel2nm, ...
              double(src.Results.Y) .* pixel2nm ];
@@ -313,26 +325,33 @@ function [XY, XY_STD, Sigma_Reg] = import_XY(src, pixel2nm)
    elseif ischar(src)
       % src is a filename
       load(src);
-      if ~exist('SRD', 'var') && exist('SRtest', 'var')
-         SRD = SRtest;
-      end
-      if ~exist('SRD', 'var')
-         error('No SRD or SRtest object found in %s!', src);
-      end
-      XY = [ double(SRD.Results.X) .* pixel2nm, ...
-             double(SRD.Results.Y) .* pixel2nm ];
-      XY_STD = [ double(SRD.Results.X_STD) .* pixel2nm, ...
-                 double(SRD.Results.Y_STD) .* pixel2nm ];
-      if isprop(SRD, 'DriftCorrect_XYShift') && ...
-         ~isempty(SRD.DriftCorrect_XYShift)
-         Sigma_Reg = std(SRD.DriftCorrect_XYShift) .* pixel2nm;
+      if exist('SMASR', 'var')
+         [XY, XY_STD, Sigma_Reg] = ROITools.import_XY(SMASR, pixel2nm);
+      elseif exist('SR', 'var')
+         [XY, XY_STD, Sigma_Reg] = ROITools.import_XY(SR, pixel2nm);
+      elseif exist('SRD', 'var')
+         [XY, XY_STD, Sigma_Reg] = ROITools.import_XY(SRD, pixel2nm);
+      elseif exist('SRtest', 'var')
+         [XY, XY_STD, Sigma_Reg] = ROITools.import_XY(SRtest, pixel2nm);
+      else
+         error('No SMASR, SR, SRD or SRtest object found in %s!', src);
       end
 
    elseif isstruct(src)
-      % src should be a SRD.Results data structure
-      XY = [ double(src.X) .* pixel2nm, double(src.Y) .* pixel2nm ];
-      XY_STD = [ double(src.X_STD) .* pixel2nm, ...
-                 double(src.Y_STD) .* pixel2nm ];
+      % src should be a data structure with fields X, Y and optionally
+      % X_SE, Y_SE or X_STD, Y_STD
+      if isfield(src, 'X') & isfield(src, 'Y')
+         XY = [ double(src.X) .* pixel2nm, double(src.Y) .* pixel2nm ];
+         if isfield(src, 'X_SE') & isfield(src, 'Y_SE')
+            XY_STD = [ double(src.X_SE) .* pixel2nm, ...
+                       double(src.Y_SE) .* pixel2nm ];
+         elseif isfield(src, 'X_STD') & isfield(src, 'Y_STD')
+            XY_STD = [ double(src.X_STD) .* pixel2nm, ...
+                       double(src.Y_STD) .* pixel2nm ];
+         end
+      else
+         error('Fields X, Y not found in src!');
+      end
 
    else
       error('Incorrect argument type for src!');

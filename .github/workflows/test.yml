@@ -1,0 +1,26 @@
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Allow writing to repository contents
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Make changes
+        run: echo "New commit" >> test.txt
+
+      - name: Commit changes
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "github-actions[bot]@users.noreply.gith
+ub.com"
+          git add .
+          git commit -m "Update from GitHub Action"
+
+      - name: Push changes to master
+        run: git push origin master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

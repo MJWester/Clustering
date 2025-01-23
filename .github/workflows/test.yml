@@ -29,6 +29,8 @@ jobs:
           git commit -m "Update from GitHub Action"
 
       - name: Push changes to master
-        run: git push origin master
-        #env:
-        #  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: git merge
+        #run: git push origin master
+        env:
+          GITHUB_TOKEN: ${{ secrets.CLUSTERING_TOKEN }}
+          #GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

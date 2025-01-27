@@ -20,6 +20,7 @@ jobs:
         with:
           # Fetch full git history to ensure all branches are accessible
           fetch-depth: 0
+          token:: ${{ secrets.PAT_TOKEN }}
 
       - name: Make changes
         run: echo "New commit" >> test.txt
@@ -33,5 +34,5 @@ jobs:
 
       - name: Push changes to master
         run: git push origin master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        #env:
+        #  GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}

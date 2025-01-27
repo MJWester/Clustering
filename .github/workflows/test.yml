@@ -15,16 +15,19 @@ jobs:
       contents: write  # Allow writing to repository contents
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Fetch full git history to ensure all branches are accessible
+          fetch-depth: 0
 
       - name: Make changes
         run: echo "New commit" >> test.txt
 
       - name: Commit changes
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
           git add .
           git commit -m "Update from GitHub Action"
 
